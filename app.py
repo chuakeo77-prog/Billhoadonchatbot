@@ -321,11 +321,8 @@ else:
             border:1px solid #ddd;
         ">
 
-            <h2>TỔNG THANH TOÁN</h2>
-
-            <h1>
+            ^_^ TỔNG THANH TOÁN ^_^
                 {dinh_dang_tien(tong_hoa_don)}
-            </h1>
 
         </div>
         """,
