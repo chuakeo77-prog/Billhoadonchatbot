@@ -1,7 +1,6 @@
 import streamlit as st
 from datetime import datetime
-from io import BytesIO 
-st.image("logo.jpg")
+
 # =========================================================
 # CẤU HÌNH TRANG
 # =========================================================
