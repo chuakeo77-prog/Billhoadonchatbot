@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 from datetime import datetime
 
@@ -19,6 +20,7 @@ try:
     st.image("logo.jpg")
 except:
     pass
+
 
 # =========================================================
 # DỮ LIỆU MENU
@@ -47,6 +49,7 @@ TOPPING = {
 
 MUC_DUONG = ["100%", "70%", "0%"]
 
+
 # =========================================================
 # HÀM ĐỊNH DẠNG TIỀN
 # =========================================================
@@ -61,6 +64,9 @@ def dinh_dang_tien(tien):
 
 if "gio_hang" not in st.session_state:
     st.session_state.gio_hang = []
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 
 # =========================================================
@@ -98,12 +104,12 @@ st.info(
     "Mỗi loại có thể cài đặt số lượng, mức đường và topping riêng."
 )
 
-# Chọn nhiều loại trà sữa
 cac_mon_chon = st.multiselect(
     "Chọn các loại trà sữa",
     list(TRA_SUA.keys()),
     placeholder="Chọn một hoặc nhiều loại trà sữa..."
 )
+
 
 # =========================================================
 # THIẾT LẬP CHI TIẾT CHO TỪNG MÓN
@@ -119,7 +125,9 @@ if cac_mon_chon:
 
         with st.container(border=True):
 
-            st.markdown(f"#### 🧋 {index + 1}. {ten_mon}")
+            st.markdown(
+                f"#### 🧋 {index + 1}. {ten_mon}"
+            )
 
             col1, col2 = st.columns(2)
 
@@ -208,7 +216,10 @@ if cac_mon_chon:
 """
             )
 
-            # Lưu món tạm thời
+            # -------------------------------------------------
+            # LƯU MÓN TẠM THỜI
+            # -------------------------------------------------
+
             mon = {
                 "ten_mon": ten_mon,
                 "so_luong": so_luong,
@@ -222,7 +233,7 @@ if cac_mon_chon:
 
 
 # =========================================================
-# NÚT THÊM NHIỀU MÓN VÀO HÓA ĐƠN
+# THÊM NHIỀU MÓN VÀO HÓA ĐƠN
 # =========================================================
 
 if cac_mon_chon:
@@ -321,8 +332,11 @@ else:
             border:1px solid #ddd;
         ">
 
-            ^_^ TỔNG THANH TOÁN ^_^
+            <h2>TỔNG THANH TOÁN</h2>
+
+            <h1>
                 {dinh_dang_tien(tong_hoa_don)}
+            </h1>
 
         </div>
         """,
@@ -407,7 +421,7 @@ else:
 
 
     # =====================================================
-    # TỔNG THANH TOÁN TRONG FILE
+    # TỔNG THANH TOÁN
     # =====================================================
 
     noi_dung_hoa_don += "\n"
@@ -462,3 +476,489 @@ else:
         st.session_state.gio_hang = []
 
         st.rerun()
+
+
+# =========================================================
+# =========================================================
+# CHATBOT TRỢ LÝ QUÁN TRÀ SỮA
+# =========================================================
+# =========================================================
+
+st.divider()
+
+st.header("🤖 Chatbot trợ lý")
+
+st.caption(
+    "Trợ lý tự động hỗ trợ khách hàng về menu, giá món, "
+    "topping, cách order và hóa đơn."
+)
+
+
+# =========================================================
+# HÀM XỬ LÝ CHATBOT
+# =========================================================
+
+def chatbot_tra_loi(cau_hoi):
+
+    cau_hoi_goc = cau_hoi.strip()
+
+    cau_hoi = cau_hoi_goc.lower()
+
+    # -----------------------------------------------------
+    # TỔNG TIỀN HIỆN TẠI
+    # -----------------------------------------------------
+
+    if (
+        "tổng tiền" in cau_hoi
+        or "tong tien" in cau_hoi
+        or "thanh toán" in cau_hoi
+        or "thanh toan" in cau_hoi
+        or "bao nhiêu tiền" in cau_hoi
+        or "bao nhieu tien" in cau_hoi
+    ):
+
+        if len(st.session_state.gio_hang) == 0:
+
+            return (
+                "🧾 Hiện tại hóa đơn chưa có món nào. "
+                "Bạn hãy chọn món để bắt đầu order nhé!"
+            )
+
+        tong = sum(
+            mon["thanh_tien"]
+            for mon in st.session_state.gio_hang
+        )
+
+        so_loai = len(st.session_state.gio_hang)
+
+        return (
+            f"🧾 Hóa đơn hiện có **{so_loai} món**.\n\n"
+            f"💰 Tổng thanh toán: **{dinh_dang_tien(tong)}**."
+        )
+
+
+    # -----------------------------------------------------
+    # SỐ MÓN TRONG HÓA ĐƠN
+    # -----------------------------------------------------
+
+    if (
+        "hóa đơn có" in cau_hoi
+        or "hoa don co" in cau_hoi
+        or "đã gọi" in cau_hoi
+        or "da goi" in cau_hoi
+        or "đã order" in cau_hoi
+        or "da order" in cau_hoi
+    ):
+
+        so_mon = len(st.session_state.gio_hang)
+
+        if so_mon == 0:
+            return "🧾 Hóa đơn hiện chưa có món nào."
+
+        return (
+            f"🧾 Hiện tại hóa đơn có **{so_mon} loại món**."
+        )
+
+
+    # -----------------------------------------------------
+    # MENU
+    # -----------------------------------------------------
+
+    if (
+        "menu" in cau_hoi
+        or "có món gì" in cau_hoi
+        or "co mon gi" in cau_hoi
+        or "có những món" in cau_hoi
+        or "co nhung mon" in cau_hoi
+    ):
+
+        danh_sach = "\n".join(
+            [
+                f"• **{mon}** – {dinh_dang_tien(gia)}"
+                for mon, gia in TRA_SUA.items()
+            ]
+        )
+
+        return (
+            "🧋 **MENU TRÀ SỮA:**\n\n"
+            + danh_sach
+            + "\n\nBạn có thể chọn nhiều món cùng lúc."
+        )
+
+
+    # -----------------------------------------------------
+    # TOPPING
+    # -----------------------------------------------------
+
+    if (
+        "topping" in cau_hoi
+        or "thêm gì" in cau_hoi
+        or "them gi" in cau_hoi
+    ):
+
+        danh_sach = "\n".join(
+            [
+                f"• **{topping}** – {dinh_dang_tien(gia)}"
+                for topping, gia in TOPPING.items()
+            ]
+        )
+
+        return (
+            "🍡 **DANH SÁCH TOPPING:**\n\n"
+            + danh_sach
+        )
+
+
+    # -----------------------------------------------------
+    # MỨC ĐƯỜNG
+    # -----------------------------------------------------
+
+    if (
+        "mức đường" in cau_hoi
+        or "muc duong" in cau_hoi
+        or "đường" in cau_hoi
+        or "duong" in cau_hoi
+    ):
+
+        return (
+            "🍬 Quán hiện có 3 mức đường:\n\n"
+            "• **100%** – ngọt bình thường\n"
+            "• **70%** – ít ngọt\n"
+            "• **0%** – không thêm đường\n\n"
+            "Bạn có thể cài đặt mức đường riêng cho từng món."
+        )
+
+
+    # -----------------------------------------------------
+    # GỢI Ý MÓN
+    # -----------------------------------------------------
+
+    if (
+        "gợi ý" in cau_hoi
+        or "goi y" in cau_hoi
+        or "nên uống gì" in cau_hoi
+        or "nen uong gi" in cau_hoi
+        or "món nào ngon" in cau_hoi
+        or "mon nao ngon" in cau_hoi
+    ):
+
+        return (
+            "🥤 Mình gợi ý một số lựa chọn:\n\n"
+            "⭐ **Trà sữa truyền thống** – lựa chọn cơ bản, dễ uống.\n\n"
+            "🍵 **Trà sữa matcha** – phù hợp nếu bạn thích vị trà xanh.\n\n"
+            "🍫 **Trà sữa socola** – phù hợp nếu bạn thích vị ngọt và socola.\n\n"
+            "🍠 **Trà sữa khoai môn** – vị béo, thơm.\n\n"
+            "🧀 Nếu thích topping, bạn có thể thêm **kem cheese** hoặc **pudding trứng**."
+        )
+
+
+    # -----------------------------------------------------
+    # GIÁ MỘT MÓN CỤ THỂ
+    # -----------------------------------------------------
+
+    for ten_mon, gia in TRA_SUA.items():
+
+        if ten_mon.lower() in cau_hoi:
+
+            return (
+                f"🧋 **{ten_mon}** có giá "
+                f"**{dinh_dang_tien(gia)}/ly** "
+                "chưa bao gồm topping."
+            )
+
+
+    # -----------------------------------------------------
+    # GIÁ TOPPING CỤ THỂ
+    # -----------------------------------------------------
+
+    for ten_topping, gia in TOPPING.items():
+
+        if ten_topping.lower() in cau_hoi:
+
+            return (
+                f"🍡 **{ten_topping}** có giá "
+                f"**{dinh_dang_tien(gia)}/phần**."
+            )
+
+
+    # -----------------------------------------------------
+    # CÁCH ORDER
+    # -----------------------------------------------------
+
+    if (
+        "order" in cau_hoi
+        or "gọi món" in cau_hoi
+        or "goi mon" in cau_hoi
+        or "đặt món" in cau_hoi
+        or "dat mon" in cau_hoi
+        or "đặt hàng" in cau_hoi
+    ):
+
+        return (
+            "🛒 **Cách order rất đơn giản:**\n\n"
+            "1️⃣ Chọn một hoặc nhiều loại trà sữa.\n\n"
+            "2️⃣ Chọn số lượng cho từng món.\n\n"
+            "3️⃣ Chọn mức đường.\n\n"
+            "4️⃣ Chọn topping nếu muốn.\n\n"
+            "5️⃣ Bấm **'Thêm tất cả món vào hóa đơn'**.\n\n"
+            "6️⃣ Kiểm tra tổng tiền và tải hóa đơn."
+        )
+
+
+    # -----------------------------------------------------
+    # XIN CHÀO
+    # -----------------------------------------------------
+
+    if (
+        "xin chào" in cau_hoi
+        or "xin chao" in cau_hoi
+        or "hello" in cau_hoi
+        or "hi" == cau_hoi
+        or cau_hoi.startswith("chào")
+        or cau_hoi.startswith("chao")
+    ):
+
+        return (
+            "👋 Xin chào! Mình là **trợ lý ảo của Quán Trà Sữa**.\n\n"
+            "Mình có thể giúp bạn:\n"
+            "• Xem menu 🧋\n"
+            "• Xem giá 💰\n"
+            "• Xem topping 🍡\n"
+            "• Gợi ý món ⭐\n"
+            "• Kiểm tra hóa đơn 🧾\n"
+            "• Hướng dẫn order 🛒"
+        )
+
+
+    # -----------------------------------------------------
+    # CẢM ƠN
+    # -----------------------------------------------------
+
+    if (
+        "cảm ơn" in cau_hoi
+        or "cam on" in cau_hoi
+        or "thanks" in cau_hoi
+    ):
+
+        return (
+            "🥰 Rất vui được hỗ trợ bạn! "
+            "Chúc bạn có một ly trà sữa thật ngon! 🧋"
+        )
+
+
+    # -----------------------------------------------------
+    # TRẢ LỜI MẶC ĐỊNH
+    # -----------------------------------------------------
+
+    return (
+        "🤖 Mình chưa hiểu câu hỏi của bạn.\n\n"
+        "Bạn có thể hỏi mình những câu như:\n\n"
+        "• **Menu có những món gì?**\n"
+        "• **Trà sữa matcha bao nhiêu tiền?**\n"
+        "• **Topping có những gì?**\n"
+        "• **Kem cheese bao nhiêu tiền?**\n"
+        "• **Gợi ý cho tôi một món ngon.**\n"
+        "• **Hóa đơn hiện tại bao nhiêu tiền?**\n"
+        "• **Cách order như thế nào?**"
+    )
+
+
+# =========================================================
+# CÂU HỎI NHANH
+# =========================================================
+
+st.markdown("### 💬 Câu hỏi nhanh")
+
+col1, col2 = st.columns(2)
+
+with col1:
+
+    if st.button(
+        "🧋 Xem menu",
+        use_container_width=True
+    ):
+
+        cau_hoi_nhanh = "Menu có những món gì?"
+
+        tra_loi = chatbot_tra_loi(
+            cau_hoi_nhanh
+        )
+
+        st.session_state.chat_history.append(
+            ("Bạn", cau_hoi_nhanh)
+        )
+
+        st.session_state.chat_history.append(
+            ("Chatbot", tra_loi)
+        )
+
+
+with col2:
+
+    if st.button(
+        "🍡 Xem topping",
+        use_container_width=True
+    ):
+
+        cau_hoi_nhanh = "Topping có những gì?"
+
+        tra_loi = chatbot_tra_loi(
+            cau_hoi_nhanh
+        )
+
+        st.session_state.chat_history.append(
+            ("Bạn", cau_hoi_nhanh)
+        )
+
+        st.session_state.chat_history.append(
+            ("Chatbot", tra_loi)
+        )
+
+
+col3, col4 = st.columns(2)
+
+with col3:
+
+    if st.button(
+        "⭐ Gợi ý món",
+        use_container_width=True
+    ):
+
+        cau_hoi_nhanh = "Gợi ý cho tôi một món ngon"
+
+        tra_loi = chatbot_tra_loi(
+            cau_hoi_nhanh
+        )
+
+        st.session_state.chat_history.append(
+            ("Bạn", cau_hoi_nhanh)
+        )
+
+        st.session_state.chat_history.append(
+            ("Chatbot", tra_loi)
+        )
+
+
+with col4:
+
+    if st.button(
+        "🧾 Xem tổng tiền",
+        use_container_width=True
+    ):
+
+        cau_hoi_nhanh = "Tổng tiền hiện tại bao nhiêu?"
+
+        tra_loi = chatbot_tra_loi(
+            cau_hoi_nhanh
+        )
+
+        st.session_state.chat_history.append(
+            ("Bạn", cau_hoi_nhanh)
+        )
+
+        st.session_state.chat_history.append(
+            ("Chatbot", tra_loi)
+        )
+
+
+# =========================================================
+# HIỂN THỊ LỊCH SỬ CHAT
+# =========================================================
+
+if st.session_state.chat_history:
+
+    st.markdown("### 💭 Hội thoại")
+
+    for nguoi_gui, noi_dung in st.session_state.chat_history:
+
+        if nguoi_gui == "Bạn":
+
+            st.markdown(
+                f"""
+                <div style="
+                    background-color:#DCF8C6;
+                    padding:10px;
+                    border-radius:10px;
+                    margin-bottom:8px;
+                    text-align:right;
+                ">
+                    <b>👤 Bạn</b><br>
+                    {noi_dung}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        else:
+
+            st.markdown(
+                f"""
+                <div style="
+                    background-color:#F1F1F1;
+                    padding:10px;
+                    border-radius:10px;
+                    margin-bottom:8px;
+                ">
+                    <b>🤖 Chatbot</b><br>
+                    {noi_dung}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+
+# =========================================================
+# Ô NHẬP CHAT
+# =========================================================
+
+cau_hoi = st.chat_input(
+    "💬 Nhập câu hỏi cho trợ lý..."
+)
+
+if cau_hoi:
+
+    # Lưu câu hỏi
+    st.session_state.chat_history.append(
+        ("Bạn", cau_hoi)
+    )
+
+    # Chatbot xử lý
+    tra_loi = chatbot_tra_loi(
+        cau_hoi
+    )
+
+    # Lưu câu trả lời
+    st.session_state.chat_history.append(
+        ("Chatbot", tra_loi)
+    )
+
+    st.rerun()
+
+
+# =========================================================
+# XÓA LỊCH SỬ CHAT
+# =========================================================
+
+if st.session_state.chat_history:
+
+    if st.button(
+        "🗑️ Xóa lịch sử chatbot",
+        use_container_width=True
+    ):
+
+        st.session_state.chat_history = []
+
+        st.rerun()
+
+
+# =========================================================
+# FOOTER
+# =========================================================
+
+st.divider()
+
+st.caption(
+    "🧋 Milk Tea Billing System | "
+    "Order - Billing - Chatbot"
+)
+```
