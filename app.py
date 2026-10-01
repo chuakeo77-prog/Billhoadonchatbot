@@ -322,7 +322,7 @@ else:
         ">
 
             ^_^ TỔNG THANH TOÁN ^_^
-        {dinh_dang_tien(tong_hoa_don)}
+          {dinh_dang_tien(tong_hoa_don)}
 
         </div>
         """,
@@ -462,4 +462,3 @@ else:
         st.session_state.gio_hang = []
 
         st.rerun()
-        
